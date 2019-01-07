@@ -1,12 +1,78 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import { render } from 'react-dom';
+import { Provider, Subscribe, Container } from 'unstated';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+type AppState = {
+  amount: number
+};
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
-serviceWorker.unregister();
+//App container contains state info for 'amount'
+class AppContainer extends Container<AppState> {
+  state = {
+    amount: 1
+  };
+
+  setAmount(amount: number) {
+    this.setState({ amount });
+  }
+}
+
+type CounterState = {
+  count: number
+};
+
+//Counter container contains state info for 'count'
+class CounterContainer extends Container<CounterState> {
+  state = {
+    count: 0
+  };
+
+  increment(amount: number) {
+    this.setState({ count: this.state.count + amount });
+  }
+
+  decrement(amount: number) {
+    this.setState({ count: this.state.count - amount });
+  }
+}
+
+function Counter() {
+  return (
+    <Subscribe to={[AppContainer, CounterContainer]}>
+      {(app, counter) => (
+        <div>
+          <span>Count: {counter.state.count}</span>
+          <button onClick={() => counter.decrement(app.state.amount)}>-</button>
+          <button onClick={() => counter.increment(app.state.amount)}>+</button>
+        </div>
+      )}
+    </Subscribe>
+  );
+}
+
+function App() {
+  return (
+    <Subscribe to={[AppContainer]}>
+      {app => (
+        <div>
+          <Counter />
+          <label>Amount: </label>
+          <input
+            type="number"
+            value={app.state.amount}
+            onChange={event => {
+              app.setAmount(parseInt(event.currentTarget.value, 10));
+            }}
+          />
+        </div>
+      )}
+    </Subscribe>
+  );
+}
+
+render(
+  <Provider>
+    <App />
+  </Provider>,
+  document.getElementById("root")
+);
